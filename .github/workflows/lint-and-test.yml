@@ -1,0 +1,30 @@
+name: Lint & Test
+on: [push]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🔎 Checking out branch ${{ github.ref }} of repo ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "💡 Checked out code."
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: 16
+      - name: Find yarn cache location
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: JS package cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Install packages
+        run: yarn
+      - name: Run Linter
+        run: yarn lint
+      - name: Run Unit Tests
+        run: yarn test

@@ -1,0 +1,5 @@
+---
+to: src/components/<%= h.camelizedPathName(name) %>/index.ts
+---
+<% componentName = h.classify(name, true) -%>
+export * from './<%= componentName %>';

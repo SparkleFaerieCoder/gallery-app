@@ -1,0 +1,7 @@
+---
+inject: true
+to: storybook/stories/index.ts
+append: true
+skip_if: <%= h.camelizedPathName(name) %>/<%= h.classify(name, true) %>.stories
+---
+import "@/components/<%= h.camelizedPathName(name) %>/<%= h.classify(name, true) %>.stories";

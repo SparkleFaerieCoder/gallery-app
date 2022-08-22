@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "allowJs": true,
+    "target": "ESNEXT",
+    "module": "ESNEXT",
+    "moduleResolution": "node",
+    "jsx": "react-native",
+    "noEmit": true,
+    "sourceMap": true,
+    "strict": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "~/*": ["./*"]
+    }
+  },
+  "exclude": ["node_modules"],
+  "include": ["src", "test", "storybook"],
+  "extends": "expo/tsconfig.base",
+  "files": ["global.d.ts"]
+}

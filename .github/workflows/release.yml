@@ -1,0 +1,209 @@
+name: Build App
+on:
+  workflow_dispatch:
+    inputs:
+      releaseStage:
+        description: 'alpha, beta or production release (alpha does not upload to TestFlight)'
+        required: true
+        default: 'alpha'
+      appVersion:
+        description: 'New version number for this app build (e.g., 2.2.3).'
+        required: true
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+    outputs:
+      android-build-url: ${{ steps.get-android-build-url.outputs.url }}
+      ios-build-url: ${{ steps.get-ios-build-url.outputs.url }}
+      android-build-url-alpha: ${{ steps.get-android-build-url-alpha.outputs.url }}
+      ios-build-url-alpha: ${{ steps.get-ios-build-url-alpha.outputs.url }}
+    steps:
+      - name: Check Release Stage
+        if: ${{ !github.event.inputs.releaseStage || (github.event.inputs.releaseStage != 'alpha' && github.event.inputs.releaseStage != 'beta' && github.event.inputs.releaseStage != 'production') }}
+        run: echo "🛑 Invalid release stage set, ${{ github.event.inputs.releaseStage }}. Stopping."; exit 1
+      - run: echo "🔎 Checking out branch ${{ github.ref }} of repo ${{ github.repository }}."
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Setup Git
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Setup Node
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: 16
+
+      - name: Expand memory limit
+        run: |
+          echo "NODE_OPTIONS=\"--max-old-space-size=8192\"" >> $GITHUB_ENV
+
+      - name: Find yarn cache location
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: JS package cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install packages
+        run: yarn install --frozen-lockfile
+
+      - name: Install Doppler
+        # Downloads binary to current directory and sets executable permissions
+        run: |
+          (curl -Ls https://cli.doppler.com/install.sh || wget -qO- https://cli.doppler.com/install.sh) | sh -s -- --no-install --no-package-manager
+
+      - run: |
+          echo "$HOME";
+          pwd
+
+      - name: Add Doppler to PATH
+        run:
+          echo "$(pwd)" >> $GITHUB_PATH
+
+      - name: Output PATH
+        run: |
+          echo "$PATH"
+
+      - name: Access Secrets From Doppler (ALPHA)
+        if: ${{ github.event.inputs.releaseStage == 'alpha' }}
+        run: doppler setup --token=${{ secrets.DOPPLER_TOKEN_ALPHA }} --no-prompt
+
+      - name: Access Secrets From Doppler (BETA)
+        if: ${{ github.event.inputs.releaseStage == 'beta' }}
+        run: doppler setup --token=${{ secrets.DOPPLER_TOKEN_BETA }} --no-prompt
+
+      - name: Access Secrets From Doppler (PRODUCTION)
+        if: ${{ github.event.inputs.releaseStage == 'production' }}
+        run: doppler setup --token=${{ secrets.DOPPLER_TOKEN_PRODUCTION }} --no-prompt
+
+      - name: Set Tokens
+        run: |
+          echo "EXPO_CI_TOKEN=$(doppler secrets get EXPO_CI_TOKEN --plain)" >> $GITHUB_ENV
+          echo "EXPO_APPLE_APP_SPECIFIC_PASSWORD=$(doppler secrets get EXPO_APPLE_APP_SPECIFIC_PASSWORD --plain)" >> $GITHUB_ENV
+          echo "APPLE_ID=$(doppler secrets get APPLE_ID --plain)" >> $GITHUB_ENV
+          echo "APPLE_ASC_APP_ID=$(doppler secrets get APPLE_ASC_APP_ID --plain)" >> $GITHUB_ENV
+          echo "SENTRY_DSN=$(doppler secrets get SENTRY_DSN --plain)" >> $GITHUB_ENV
+          echo "SENTRY_ORGANIZATION=$(doppler secrets get SENTRY_ORGANIZATION --plain)" >> $GITHUB_ENV
+          echo "SENTRY_PROJECT=$(doppler secrets get SENTRY_PROJECT --plain)" >> $GITHUB_ENV
+          echo "SENTRY_TOKEN=$(doppler secrets get SENTRY_TOKEN --plain)" >> $GITHUB_ENV
+
+      - name: Install EAS CLI
+        uses: expo/expo-github-action@v6
+        with:
+          eas-version: ~0.35.0
+          eas-cache: false
+          token: ${{ env.EXPO_CI_TOKEN }}
+
+      - name: Update iOS / Android Versions
+        env:
+          APP_VERSION: ${{github.event.inputs.appVersion}}
+          BUILD_VERSION: ${{github.run_number}}
+        run: |
+          node ./scripts/github/version-ios-android
+          git add ios android
+          git commit -m "ios / android version bump"
+
+      - name: Add App/Build Versions to eas.json
+        env:
+          APP_VERSION: ${{github.event.inputs.appVersion}}
+          BUILD_VERSION: ${{github.run_number}}
+          APPLE_ID: ${{env.APPLE_ID}}
+          APPLE_ASC_APP_ID: ${{env.APPLE_ASC_APP_ID}}
+          ANDROID_EXPO_DEPLOY_KEY_PATH: './android/app/expo-deploy-key.json'
+          ANDROID_SUBMIT_TRACK: 'internal'
+        run: |
+          node ./scripts/github/write-eas-json
+          git add eas.json
+          git commit -m "write eas.json"
+
+      - name: Log eas.json
+        run: cat eas.json
+
+      - name: Run git status
+        run: git status
+
+      - name: Set Android Deploy key
+        if: ${{ github.event.inputs.releaseStage != 'alpha' }}
+        run: |
+          doppler secrets get EXPO_DEPLOY_KEY --plain | base64 -d > android/app/expo-deploy-key.json
+
+      - name: Run EAS Build (Android)
+        run: |
+          set -o pipefail
+          DEBUG=* EXPO_DEBUG=1 eas build --platform android --profile ${{ github.event.inputs.releaseStage }} --non-interactive | tee -a eas-android.log
+
+      - name: Upload eas-android.log
+        uses: actions/upload-artifact@v2
+        with:
+          path: eas-android.log
+
+
+
+      #
+      # Submit Beta / Production apps using EAS Submit, and output the artifact urls.
+      #
+      - name: Get Android Build URL
+        if: ${{ github.event.inputs.releaseStage != 'alpha' }}
+        id: get-android-build-url
+        run: echo "::set-output name=url::$(cat eas-android.log | grep 'https://.*.aab')"
+
+      - name: Submit Android to Google Play Store
+        if: ${{ github.event.inputs.releaseStage != 'alpha' }}
+        run: DEBUG=* EXPO_DEBUG=1 eas submit -p android --profile=${{ github.event.inputs.releaseStage }} --url=${{ steps.get-android-build-url.outputs.url }}
+
+      - name: Run EAS Build (iOS)
+        run: |
+          set -o pipefail
+          DEBUG=* EXPO_DEBUG=1 eas build --platform ios --profile ${{ github.event.inputs.releaseStage }} --non-interactive | tee -a eas-ios.log
+
+      - name: Upload eas-ios.log
+        uses: actions/upload-artifact@v2
+        with:
+          path: eas-ios.log
+
+      - name: Get iOS Build URL
+        if: ${{ github.event.inputs.releaseStage != 'alpha' }}
+        id: get-ios-build-url
+        run: echo "::set-output name=url::$(cat eas-ios.log | grep 'https://.*.ipa')"
+
+      - name: Submit iOS App to App Store Connect
+        if: ${{ github.event.inputs.releaseStage != 'alpha' }}
+        run: DEBUG=* EXPO_DEBUG=1 EXPO_APPLE_APP_SPECIFIC_PASSWORD=${{ env.EXPO_APPLE_APP_SPECIFIC_PASSWORD }} eas submit -p ios --profile=${{ github.event.inputs.releaseStage }} --url=${{ steps.get-ios-build-url.outputs.url }}
+
+
+
+      - name: Output Build URLs
+        if: ${{ github.event.inputs.releaseStage != 'alpha' }}
+        run: |
+          # echo "Android Build — ${{ steps.get-android-build-url.outputs.url }}\n"
+          echo "iOS Build — ${{ steps.get-ios-build-url.outputs.url }}"
+
+      #
+      # Get Expo build page urls for alpha builds, and display them for easy linking.
+      #
+      - name: Get Android Build URL (Alpha)
+        if: ${{ github.event.inputs.releaseStage == 'alpha' }}
+        id: get-android-build-url-alpha
+        # Note use of . instead of : in sed regex below, since colons make yaml freak out.
+        run: echo "::set-output name=url::$(cat eas-android.log | sed -n 's/^Build details. //p')"
+
+      - name: Get iOS Build URL (Alpha)
+        if: ${{ github.event.inputs.releaseStage == 'alpha' }}
+        id: get-ios-build-url-alpha
+        # Note use of . instead of : in sed regex below, since colons make yaml freak out.
+        run: echo "::set-output name=url::$(cat eas-ios.log | sed -n 's/^Build details. //p')"
+
+      - name: Output Build URLs (Alpha)
+        if: ${{ github.event.inputs.releaseStage == 'alpha' }}
+        run: |
+          echo "Android Build — ${{ steps.get-android-build-url-alpha.outputs.url }}"
+          echo "iOS Build — ${{ steps.get-ios-build-url-alpha.outputs.url }}"

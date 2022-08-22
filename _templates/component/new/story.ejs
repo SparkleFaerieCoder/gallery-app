@@ -1,0 +1,9 @@
+---
+to: src/components/<%= h.camelizedPathName(name) %>/<%= h.classify(name, true) %>.stories.tsx
+---
+<% const componentName = h.classify(name, true) -%>
+import { storiesOf } from '@storybook/react-native';
+
+import { <%= componentName %> } from './<%= componentName %>';
+
+storiesOf('components/<%= componentName %>', module).add('Default', () => <<%= componentName %> />);

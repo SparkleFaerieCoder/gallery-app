@@ -1,0 +1,27 @@
+---
+to: src/components/<%= h.camelizedPathName(name) %>/<%= h.classify(name, true) %>.tsx
+---
+<% componentName = h.classify(name, true) -%>
+import React, { ReactNode } from 'react';
+
+import { Container } from '@/components/Container';
+import { Text } from '@/components/Text';
+
+export interface <%= componentName %>Props {
+  /** Any required properties to add */
+
+  /** optional children */
+  children?: ReactNode;
+}
+
+/**
+ * A <%= componentName %> component, used for something.
+ */
+export function <%= componentName %>({ children }: <%= componentName %>Props) {
+  return (
+    <Container flex={1} flexDirection="column" justifyContent="center">
+      <Text><%= componentName %> Component</Text>
+      {children}
+    </Container>
+  );
+}

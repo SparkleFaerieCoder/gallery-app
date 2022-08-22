@@ -1,0 +1,19 @@
+---
+to: src/screens/<%= h.classify(name) %>/<%= h.classify(name) %>Screen.tsx
+---
+<% componentName = h.classify(name) -%>
+import React from 'react';
+
+import { Screen } from '@/components/Screen';
+import { Text } from '@/components/Text';
+
+/**
+ * A <%= componentName %> screen
+ */
+export function <%= componentName %>Screen() {
+  return (
+    <Screen testID="<%= componentName %>Screen" alignItems="center" justifyContent="center">
+      <Text><%= componentName %> Screen</Text>
+    </Screen>
+  );
+}

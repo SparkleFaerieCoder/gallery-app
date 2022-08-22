@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "gallery-app",
+    "slug": "gallery-app",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  },
+  "name": "galleryapp"
+}
