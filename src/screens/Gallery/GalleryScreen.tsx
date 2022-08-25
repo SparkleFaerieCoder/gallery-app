@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  Text,
+  SectionList,
+} from 'react-native';
 import { Image } from '@rneui/themed';
 import { Overlay } from '@rneui/base';
 
@@ -15,7 +23,6 @@ const BASE_URI = 'https://source.unsplash.com/random?sig=';
 const styles = StyleSheet.create({
   list: {
     width: '100%',
-
     backgroundColor: '#000',
   },
   item: {
@@ -31,7 +38,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const items = [...new Array(24)].map((_, i) => i.toString());
+const items = [...new Array(24)].map((_, i) => BASE_URI + i.toString());
 
 const gallerySections = [
   { title: 'One', data: [] },
@@ -49,7 +56,10 @@ export function GalleryScreen() {
   };
 
   const renderListItem = ({ item }: { item: string }) => {
-    const uri = BASE_URI + item;
+    const uri = item;
+
+    // console.log({ uri });
+
     return (
       <Container flex={1}>
         <Image
@@ -66,18 +76,23 @@ export function GalleryScreen() {
           onPress={toggleOverlay}
           transition={true}
         />
-        <Overlay isVisible={visible} onBackdropPress={toggleOverlay}>
+        <Overlay
+          isVisible={visible}
+          onBackdropPress={toggleOverlay}
+          overlayStyle={{ backgroundColor: 'transparent' }}
+          backdropStyle={{ opacity: 0.8, backgroundColor: 'black' }}
+        >
           <Image
             source={{ uri }}
             PlaceholderContent={
               <ActivityIndicator
                 color="white"
                 style={{
-                  width: '50%',
+                  height: '100%',
                 }}
               />
             }
-            style={{ flex: 0.5 }}
+            containerStyle={{ width: '100%', aspectRatio: 1 }}
             transition={true}
           />
         </Overlay>
