@@ -1,0 +1,6 @@
+module Pods_galleryapp {
+  umbrella header "Pods-galleryapp-umbrella.h"
+
+  export *
+  module * { export * }
+}
