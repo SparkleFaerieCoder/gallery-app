@@ -9,7 +9,7 @@ import {
   SectionList,
 } from 'react-native';
 import { Image } from '@rneui/themed';
-import { Overlay } from '@rneui/base';
+import { Icon, Overlay } from '@rneui/base';
 
 import { Screen } from '@/components/Screen';
 import { Container } from '@/components/Container';
@@ -79,22 +79,30 @@ export function GalleryScreen() {
         <Overlay
           isVisible={visible}
           onBackdropPress={toggleOverlay}
-          overlayStyle={{ backgroundColor: 'transparent' }}
+          overlayStyle={{ backgroundColor: 'white', paddingBottom: 50, paddingTop: 0 }}
           backdropStyle={{ opacity: 0.8, backgroundColor: 'black' }}
         >
-          <Image
-            source={{ uri }}
-            PlaceholderContent={
-              <ActivityIndicator
-                color="white"
-                style={{
-                  height: '100%',
-                }}
-              />
-            }
-            containerStyle={{ width: '100%', aspectRatio: 1 }}
-            transition={true}
-          />
+          <Container>
+            <Icon
+              name="close"
+              color="black"
+              style={{ textAlign: 'right', alignSelf: 'flex-end' }}
+              onPress={toggleOverlay}
+            />
+            <Image
+              source={{ uri }}
+              PlaceholderContent={
+                <ActivityIndicator
+                  color="white"
+                  style={{
+                    height: '100%',
+                  }}
+                />
+              }
+              containerStyle={{ width: '100%', aspectRatio: 1 }}
+              transition={true}
+            />
+          </Container>
         </Overlay>
       </Container>
     );
