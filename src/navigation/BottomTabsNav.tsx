@@ -1,16 +1,13 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { Icon } from '@rneui/base';
 
 import { ProfileScreen } from '@/screens/Profile';
-import { CameraScreen } from '@/screens/CameraScreen';
 import { GalleryScreen } from '@/screens/Gallery';
 import { Container } from '@/components/Container';
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
 
 const CameraBase = () => <View style={{ flex: 1, backgroundColor: 'transparent' }} />;
 

@@ -1,13 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import {
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-  Text,
-  SectionList,
-} from 'react-native';
+import React, { useState } from 'react';
+import { FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from '@rneui/themed';
 import { Icon, Overlay } from '@rneui/base';
 
@@ -40,13 +32,13 @@ const styles = StyleSheet.create({
 
 const items = [...new Array(24)].map((_, i) => BASE_URI + i.toString());
 
-const gallerySections = [
+const gallerySections: Record<string, any>[] = [
   { title: 'One', data: [] },
   { title: 'Two', data: [] },
   { title: 'Three', data: [] },
 ];
 
-items.map((item: string, i) => gallerySections[i % 4 === 0 ? 0 : 1].data.push(item));
+items.map((item, i) => gallerySections[i % 4 === 0 ? 0 : 1].data.push(item));
 
 export function GalleryScreen() {
   const [visible, setVisible] = useState(false);
@@ -57,8 +49,6 @@ export function GalleryScreen() {
 
   const renderListItem = ({ item }: { item: string }) => {
     const uri = item;
-
-    // console.log({ uri });
 
     return (
       <Container flex={1}>
