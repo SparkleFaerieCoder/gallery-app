@@ -7,6 +7,8 @@
 
 ## Quick start
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/18772d91284248ae98faf320e64f907f)](https://app.codacy.com/gh/SparkleFaerieCoder/gallery-app?utm_source=github.com&utm_medium=referral&utm_content=SparkleFaerieCoder/gallery-app&utm_campaign=Badge_Grade_Settings)
+
 1. Install [Expo CLI](https://docs.expo.dev/get-started/installation/) with `npm install --global expo-cli` or `yarn global add expo-cli`.
 2. Create new React Native project with `expo init --template @echobind/expo-typescript`.
 3. Change directory to your project's folder with `cd <your-project-name>`.
