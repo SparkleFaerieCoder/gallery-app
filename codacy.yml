@@ -1,0 +1,11 @@
+---
+exclude_paths:
+  - ".bundle/**"
+  - "spec/**/*"
+  - "benchmarks/**/*"
+  - "**.min.js"
+  - "**/tests/**"
+  - "ios"
+  - "android"
+  - "expo"
+  - "*/.hygen.js"
