@@ -1,3 +1,5 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8f5960b2389846c9831498dfc0951a98)](https://www.codacy.com/gh/SparkleFaerieCoder/gallery-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SparkleFaerieCoder/gallery-app&amp;utm_campaign=Badge_Grade)
+
 <p align="center">
   An opinionated <a href="https://docs.expo.dev">Expo</a> Bare Workflow template that will allow you to start a new React Native project quickly with TypeScript, Prettier, ESLint, and some custom configurations that will make development process better. 💖
 </p>
